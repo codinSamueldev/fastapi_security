@@ -1,8 +1,7 @@
 from fastapi import HTTPException
 from pydantic import BaseModel
 from typing import Union
-from passlib.context import CryptContext
-
+from fake_database import fake_users_db
 
 context = CryptContext(schemes=["bcrypt"], deprecated="auto") # CryptContext will help us to validate user hashed_password.
 
@@ -20,6 +19,11 @@ class UserInDB(User):
 
 
 
+def fake_hash_password(password: str):
+    return "fakehashed" + password
+
+
+
 def get_user(db, username):
     """ 
     Verify if user exist in the Database. If exists return user, if not return empty string.
@@ -31,25 +35,17 @@ def get_user(db, username):
     return []
 
 
-def verify_password(plain_password, hashed_password):
-    """ 
-    Validate if password is correct or not.
-    """
-    return context.verify(plain_password, hashed_password) # verify method will return a boolean value.
+def authenticate_user(login_data):
+    user_dict = fake_users_db.get(login_data.username)
+    if not user_dict:
+        raise HTTPException(status_code=400, detail="Incorrect username or password.")
 
+    user = UserInDB(**user_dict) # UserInDB(**user_dict) means: Pass the keys and values of the user_dict directly as key-value arguments.
+    hashed_password = fake_hash_password(login_data.password)
+    if hashed_password != user.hashed_password:
+        raise HTTPException(status_code=400, detail="Incorrect username or password.")
 
-
-def authenticate_user(db, username, password):
-    user = get_user(db, username)
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User or password not found...", headers={"WWW-Authenticate": "Bearer"})
-
-    if verify_password(password, user.hashed_password): # If password is True, then won't enter the if. Otherwise, raise error.
-        return user
-    """
-    else:
-        raise HTTPException(status_code=404, detail="User or password not found...", headers={"WWW-Authenticate": "Bearer"})"""
+    # return user
 
 
 
