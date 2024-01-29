@@ -3,8 +3,6 @@ from pydantic import BaseModel
 from typing import Union
 from fake_database import fake_users_db
 
-context = CryptContext(schemes=["bcrypt"], deprecated="auto") # CryptContext will help us to validate user hashed_password.
-
 
 class User(BaseModel):
     username: str
